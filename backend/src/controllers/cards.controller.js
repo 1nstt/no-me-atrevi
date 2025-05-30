@@ -1,36 +1,94 @@
-//importar mongodb
-
-import e from "express";
+import Card from '../models/card.model.js';
 
 export const getCards = async (req, res) => {
-    res.status(200).json({
-        message:"obteniendo las tarjetas"
-    });
-}
+    try {
+        const cards = await Card.find().sort({ createdAt: -1 });
+        res.status(200).json(cards);
+    } catch (error) {
+        res.status(500).json({ 
+            message: "Error al obtener las tarjetas",
+            error: error.message 
+        });
+    }
+};
 
 export const getCard = async (req, res) => {
-    const {id} = req.params;
-    res.status(200).json({
-        message: `obteniendo la tarjeta con id ${id}`
-    });
-}
+    const { id } = req.params;
+    try {
+        const card = await Card.findById(id);
+        if (!card) {
+            return res.status(404).json({ message: `Tarjeta con id ${id} no encontrada` });
+        }
+        res.status(200).json(card);
+    } catch (error) {
+        res.status(500).json({ 
+            message: `Error al obtener la tarjeta con id ${id}`,
+            error: error.message 
+        });
+    }
+};
 
 export const createCard = async (req, res) => {
-    res.status(201).json({
-        message: "creando una tarjeta"
-    });
-}
+    const { to, message, timeAgo } = req.body;
+    try {
+        const newCard = new Card({
+            to,
+            message,
+            timeAgo: timeAgo || 'HOY'
+        });
+        
+        const savedCard = await newCard.save();
+        res.status(201).json(savedCard);
+    } catch (error) {
+        res.status(400).json({ 
+            message: "Error al crear la tarjeta",
+            error: error.message 
+        });
+    }
+};
 
 export const updateCard = async (req, res) => {
-    const {id} = req.params;
-    res.status(200).json({
-        message: `actualizando la tarjeta con id ${id}`
-    });
-}
+    const { id } = req.params;
+    const { to, message, timeAgo } = req.body;
+    
+    try {
+        const updatedCard = await Card.findByIdAndUpdate(
+            id, 
+            { to, message, timeAgo },
+            { new: true, runValidators: true }
+        );
+        
+        if (!updatedCard) {
+            return res.status(404).json({ message: `Tarjeta con id ${id} no encontrada` });
+        }
+        
+        res.status(200).json(updatedCard);
+    } catch (error) {
+        res.status(400).json({ 
+            message: `Error al actualizar la tarjeta con id ${id}`,
+            error: error.message 
+        });
+    }
+};
 
 export const deleteCard = async (req, res) => {
-    const {id} = req.params;
-    res.status(200).json({
-        message: `eliminando la tarjeta con id ${id}`
-    });
-}
+    const { id } = req.params;
+    
+    try {
+        const deletedCard = await Card.findByIdAndDelete(id);
+        
+        if (!deletedCard) {
+            return res.status(404).json({ message: `Tarjeta con id ${id} no encontrada` });
+        }
+        
+        res.status(200).json({ 
+            message: `Tarjeta con id ${id} eliminada correctamente`,
+            card: deletedCard 
+        });
+    } catch (error) {
+        res.status(400).json({ 
+            message: `Error al eliminar la tarjeta con id ${id}`,
+            error: error.message 
+        });
+    }
+};

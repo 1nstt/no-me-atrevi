@@ -1,21 +1,22 @@
 import express from 'express';
-import CardsRoutes from './routes/cards.routes.js';
+import connectDB from './db.js';
+import { PORT } from './config.js';
+
+// Import routes
+import cardsRoutes from './routes/cards.routes.js';
+
 const app = express();
 
-const PORT = process.env.PORT || 3000;
-
+// Middleware to parse JSON bodies
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-app.use('/api/cards', CardsRoutes);
-app.get('/', (req, res) => {
-  res.status(200).json({
-    message: 'Welcome to the Cards API',
-  });
-}
-);
+// Connect to MongoDB
+connectDB();
 
+// Routes
+app.use('/api/cards', cardsRoutes);
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
