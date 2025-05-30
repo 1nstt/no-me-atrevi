@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { InstagramMessageCard } from './InstagramMessageCard'
-
+import { BACKEND_URL } from '../config'
 export function MessageBoard() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
@@ -9,7 +9,8 @@ export function MessageBoard() {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/cards')
+        const response = await fetch(`${BACKEND_URL}/api/cards`)
+        console.log('Fetching messages from:', `${BACKEND_URL}/api/cards`)
         
         if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status}`)
