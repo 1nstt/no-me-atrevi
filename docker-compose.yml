@@ -1,0 +1,18 @@
+services:
+  frontend:
+    build:
+      context: ./no-me-atrevi-a-decirtelo
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./no-me-atrevi-a-decirtelo:/app
+  
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
