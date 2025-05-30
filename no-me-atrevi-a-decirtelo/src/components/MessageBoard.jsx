@@ -1,63 +1,71 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { InstagramMessageCard } from './InstagramMessageCard'
 
-const messages = [
-  {
-    id: 1,
-    to: "María",
-    message:
-      "Siempre he admirado tu valentía. La forma en que enfrentas los desafíos me inspira a ser mejor persona. Nunca te lo dije porque temía que pensaras que buscaba algo más.",
-    timeAgo: "HOY",
-  },
-  {
-    id: 2,
-    to: "Juan",
-    message:
-      "Aquella noche bajo las estrellas, cuando hablábamos de nuestros sueños, quise decirte que eras parte de los míos. El miedo a perder nuestra amistad me hizo callar.",
-    timeAgo: "AYER",
-  },
-  {
-    id: 3,
-    to: "Carlos",
-    message:
-      "Cuando te fuiste de la empresa, quise decirte cuánto aprendí de ti. Fuiste el mejor mentor que pude tener, pero mi orgullo me impidió expresarlo.",
-    timeAgo: "LUNES",
-  },
-  {
-    id: 4,
-    to: "Ana",
-    message:
-      "Cada vez que me ayudaste sin pedir nada a cambio, me sentí en deuda. Tu generosidad me enseñó lo que significa la verdadera amistad. Nunca te agradecí como merecías.",
-    timeAgo: "SEMANA PASADA",
-  },
-  {
-    id: 5,
-    to: "Pedro",
-    message:
-      "Aquella idea que presentaste y todos criticaron, yo la encontré brillante. No te defendí por miedo al rechazo del grupo, y es algo de lo que me arrepiento cada día.",
-    timeAgo: "2 SEMANAS",
-  },
-  {
-    id: 6,
-    to: "Laura",
-    message:
-      "Cuando pasabas por ese momento difícil, quise abrazarte y decirte que no estabas sola. Mi timidez me paralizó, y ahora que estás mejor, siento que perdí la oportunidad.",
-    timeAgo: "3 SEMANAS",
-  },
-]
-
 export function MessageBoard() {
+  const [messages, setMessages] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/cards')
+        
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        setMessages(data)
+        setLoading(false)
+      } catch (error) {
+        console.error('Error fetching messages:', error)
+        setError(error.message)
+        setLoading(false)
+      }
+    }
+
+    fetchMessages()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-red-500 mb-4">Error al cargar los mensajes: {error}</p>
+        <p className="text-gray-600 dark:text-gray-400">
+          Por favor, intenta nuevamente más tarde
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {messages.map((message) => (
-        <div key={message.id} className="w-full">
-          <InstagramMessageCard 
-            to={message.to} 
-            message={message.message} 
-            timeAgo={message.timeAgo} 
-          />
+      {messages.length > 0 ? (
+        messages.map((message) => (
+          <div key={message._id} className="w-full">
+            <InstagramMessageCard 
+              to={message.to} 
+              message={message.message} 
+              timeAgo={message.timeAgo} 
+            />
+          </div>
+        ))
+      ) : (
+        <div className="col-span-full text-center py-10">
+          <p className="text-gray-600 dark:text-gray-400">
+            No hay mensajes disponibles
+          </p>
         </div>
-      ))}
+      )}
     </div>
   )
 }
