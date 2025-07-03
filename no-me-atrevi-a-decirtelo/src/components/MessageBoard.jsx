@@ -48,10 +48,10 @@ export function MessageBoard() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 auto-rows-fr">
       {messages.length > 0 ? (
         messages.map((message) => (
-          <div key={message._id} className="w-full">
+          <div key={message._id} className="w-full min-h-[280px] sm:min-h-[320px] lg:min-h-[360px]">
             <InstagramMessageCard 
               to={message.to} 
               message={message.message} 
@@ -61,9 +61,19 @@ export function MessageBoard() {
         ))
       ) : (
         <div className="col-span-full text-center py-10">
-          <p className="text-gray-600 dark:text-gray-400">
-            No hay mensajes disponibles
-          </p>
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-2xl">💌</span>
+            </div>
+            <div>
+              <p className="text-gray-600 dark:text-gray-400 text-lg font-medium mb-2">
+                No hay mensajes disponibles
+              </p>
+              <p className="text-gray-500 dark:text-gray-500 text-sm">
+                ¡Sé el primero en enviar un mensaje anónimo!
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>

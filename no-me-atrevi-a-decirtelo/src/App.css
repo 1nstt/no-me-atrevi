@@ -35,9 +35,26 @@
   }
 
   /* 3D flip card styles */
+.flip-card {
+  perspective: 1000px;
+  width: 100%;
+  aspect-ratio: 0.85; /* Hace las tarjetas más cuadradas */
+  min-height: 280px; /* Altura mínima para móviles */
+}
+
+@media (min-width: 640px) {
   .flip-card {
-    perspective: 1000px;
+    aspect-ratio: 0.9; /* Aún más cuadrado en pantallas grandes */
+    min-height: 320px;
   }
+}
+
+@media (min-width: 1024px) {
+  .flip-card {
+    aspect-ratio: 0.95; /* Casi cuadrado en desktop */
+    min-height: 350px;
+  }
+}
 
   .flip-card-inner {
     position: relative;
@@ -58,9 +75,29 @@
     height: 100%;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    border-radius: 0.75rem;
   }
 
   .flip-card-back {
     transform: rotateY(180deg);
+  }
+
+  /* Grid responsivo mejorado */
+  @media (max-width: 640px) {
+    .flip-card {
+      min-height: 400px;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 1023px) {
+    .flip-card {
+      min-height: 420px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .flip-card {
+      min-height: 450px;
+    }
   }
 }
