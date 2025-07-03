@@ -117,7 +117,7 @@ export function InstagramMessageCard({ to, message, timeAgo }) {
               Lado oculto
             </h3>
             <p className="text-xs sm:text-sm text-purple-700 dark:text-purple-200 leading-relaxed font-poppins mb-4">
-              Aquí podrías mostrar información adicional, reacciones, comentarios o cualquier contenido especial relacionado con este mensaje.
+              Por el momento no hay ninguna pista de la persona que te envió este mensaje...
             </p>
             <div className="mt-auto text-xs text-purple-600 dark:text-purple-300 font-medium">Para: {to}</div>
           </div>
