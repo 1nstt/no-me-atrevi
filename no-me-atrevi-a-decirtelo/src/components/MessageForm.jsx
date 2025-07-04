@@ -154,13 +154,13 @@ export function MessageForm({ onBack, onSubmit }) {
                   value={formData.message}
                   onChange={handleInputChange}
                   rows={6}
-                  maxLength={500}
+                  maxLength={230}
                   disabled={isSubmitting}
                   className="flex w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 px-4 py-3 text-sm sm:text-base placeholder:text-gray-500 dark:placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-gray-900 dark:text-white resize-none font-poppins transition-all duration-300 leading-relaxed"
                 />
                 <div className="mt-2 text-right">
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {formData.message.length} caracteres
+                    {formData.message.length}/230 caracteres
                   </span>
                 </div>
               </div>
