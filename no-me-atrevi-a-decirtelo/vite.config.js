@@ -4,4 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    allowedHosts: ['frontend-production-87d1.up.railway.app']
+  }
 })
