@@ -65,7 +65,7 @@ function App() {
               No me atreví a decírtelo
             </h1>
             <p className="text-gray-600 dark:text-gray-300 max-w-lg mx-auto text-lg font-light tracking-wide transition-colors duration-300 font-poppins">
-              Mensajes que guardamos en silencio, ahora en un mural en el que al menos no morirá en el fondo de un recuerdo.
+              Mensajes que guardamos en silencio, ahora en un mural en el que al menos no morirán en el fondo de un recuerdo.
             </p>
           </div>
 
