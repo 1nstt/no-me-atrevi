@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Send, ArrowLeft, Heart } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Input } from './ui/Input'
+import { BACKEND_URL } from '../config'
 
 export function MessageForm({ onBack, onSubmit }) {
   const [formData, setFormData] = useState({
@@ -29,8 +30,9 @@ export function MessageForm({ onBack, onSubmit }) {
     setIsSubmitting(true)
     setSubmitStatus(null)
 
+    
     try {
-      const response = await fetch('http://localhost:3000/api/cards', {
+      const response = await fetch(`${BACKEND_URL}/api/cards`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
