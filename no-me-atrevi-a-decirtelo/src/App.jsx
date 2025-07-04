@@ -10,6 +10,8 @@ import './App.css'
 
 function App() {
   const [currentView, setCurrentView] = useState('home') // 'home' or 'form'
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
 
   const handleGoToForm = () => {
     setCurrentView('form')
@@ -22,6 +24,12 @@ function App() {
   const handleMessageSubmit = (newMessage) => {
     // Aquí podrías refrescar los mensajes o hacer algo con el nuevo mensaje
     console.log('Nuevo mensaje enviado:', newMessage)
+    // Limpiar búsqueda al enviar nuevo mensaje para mostrar todos los mensajes
+    setSearchTerm('')
+  }
+
+  const handleSearch = (term) => {
+    setSearchTerm(term)
   }
 
   if (currentView === 'form') {
@@ -62,10 +70,17 @@ function App() {
           </div>
 
           {/* Search Bar */}
-          <SearchBar />
+          <SearchBar 
+            onSearch={handleSearch}
+            isSearching={isSearching}
+            searchTerm={searchTerm}
+          />
 
           {/* Message Board */}
-          <MessageBoard />
+          <MessageBoard 
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+          />
         </div>
       </div>
     </ThemeProvider>

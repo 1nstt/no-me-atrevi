@@ -92,3 +92,33 @@ export const deleteCard = async (req, res) => {
         });
     }
 };
+
+
+export const getCardsByTo = async (req, res) => {
+    const { to } = req.params;
+    
+    try {
+        // Buscar tarjetas que coincidan exactamente con el campo "to"
+        const cards = await Card.find({ 
+            to: { $regex: new RegExp(to, 'i') } // Búsqueda insensible a mayúsculas/minúsculas
+        }).sort({ createdAt: -1 });
+        
+        if (cards.length === 0) {
+            return res.status(404).json({ 
+                message: `No se encontraron tarjetas para "${to}"` 
+            });
+        }
+        
+        res.status(200).json({
+            message: `Se encontraron ${cards.length} tarjeta(s) para "${to}"`,
+            count: cards.length,
+            cards: cards
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            message: `Error al buscar tarjetas para "${to}"`,
+            error: error.message 
+        });
+    }
+};
+
