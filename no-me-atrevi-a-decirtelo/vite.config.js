@@ -5,6 +5,12 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    allowedHosts: ['frontend-production-87d1.up.railway.app']
+    allowedHosts: [
+      'frontend-production-87d1.up.railway.app',
+      'nomeatrevi.com',
+      'www.nomeatrevi.com',
+      'https://nomeatrevi.com',
+      'https://www.nomeatrevi.com'
+    ]
   }
 })
