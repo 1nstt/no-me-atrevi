@@ -4,6 +4,7 @@ import { PORT } from './config.js';
 import cors from 'cors';
 // Import routes
 import cardsRoutes from './routes/cards.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/cards', cardsRoutes);
+app.use('/api/admin', adminRoutes); 
 
 // Start server
 app.listen(PORT, () => {
