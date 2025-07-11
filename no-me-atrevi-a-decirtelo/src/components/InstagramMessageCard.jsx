@@ -43,7 +43,7 @@ export function InstagramMessageCard({ to, message, timeAgo }) {
           </div>
 
           {/* Card Content - Instagram DM Style */}
-          <div className="p-3 sm:p-4 bg-gray-50 dark:bg-slate-900 flex flex-col transition-colors duration-300 flex-1 min-h-0">
+          <div className="p-3 sm:p-4 bg-gray-50 dark:bg-slate-900 flex flex-col transition-colors duration-300 flex-1 min-h-0 card-content-scroll">
             {/* Date separator */}
             <div className="text-center mb-3 sm:mb-4 flex-shrink-0">
               <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-slate-800 px-2 sm:px-3 py-1 rounded-full transition-colors duration-300">
