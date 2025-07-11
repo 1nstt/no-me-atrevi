@@ -102,3 +102,73 @@ export const declineReport = async (req, res) => {
         return res.status(500).json({message: "Server error"});
     }
 }
+
+// Lista de palabras ofensivas
+const OFFENSIVE_WORDS = [
+    'perra', 'zorra', 'maraka', 'puta', 'hija de puta', 'idiota', 'imbécil', 'estúpido',
+    'ql', 'culiada', 'ctm', 'conchadesumadre', 'concha de tu madre','hijo de puta', 'mierda',
+];
+
+// Función para detectar palabras ofensivas
+const containsOffensiveWords = (text) => {
+    const normalizedText = text.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, ""); // Remover acentos
+    
+    return OFFENSIVE_WORDS.some(word => 
+        normalizedText.includes(word.toLowerCase())
+    );
+};
+
+//función para analizar todas las tarjetas
+export const analyze = async (req, res) => {
+    try {
+        // Obtener todas las tarjetas activas
+        const allCards = await Card.find({ active: true });
+        
+        let analyzedCards = 0;
+        let cardsWithOffensiveContent = 0;
+        const updatedCards = [];
+
+        // Analizar cada tarjeta
+        for (const card of allCards) {
+            const hasOffensiveContent = 
+                containsOffensiveWords(card.message) || 
+                containsOffensiveWords(card.to);
+            
+            if (hasOffensiveContent) {
+                // Incrementar el contador de reportes
+                const updatedCard = await Card.findByIdAndUpdate(
+                    card._id,
+                    { $inc: { reportsCounter: 1 } },
+                    { new: true }
+                );
+                
+                updatedCards.push({
+                    id: card._id,
+                    to: card.to,
+                    message: card.message,
+                    newReportsCount: updatedCard.reportsCounter
+                });
+                
+                cardsWithOffensiveContent++;
+            }
+            
+            analyzedCards++;
+        }
+
+        return res.status(200).json({
+            message: "Análisis completado exitosamente",
+            summary: {
+                totalAnalizado: analyzedCards,
+                cardsconlenguajeOfensivo: cardsWithOffensiveContent,
+                cardsActualizadas: updatedCards.length
+            },
+            updatedCards
+        });
+
+    } catch (error) {
+        console.log('Error:', error);
+        return res.status(500).json({message: "Server error"});
+    }
+};
