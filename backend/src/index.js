@@ -2,6 +2,7 @@ import express from 'express';
 import connectDB from './db.js';
 import { PORT } from './config.js';
 import cors from 'cors';
+import coockieParser from 'cookie-parser';
 // Import routes
 import cardsRoutes from './routes/cards.routes.js';
 import adminRoutes from './routes/admin.routes.js';
@@ -18,6 +19,7 @@ app.use(cors({
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+app.use(coockieParser());
 
 // Connect to MongoDB
 connectDB();
