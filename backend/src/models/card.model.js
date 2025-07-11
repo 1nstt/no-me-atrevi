@@ -18,7 +18,16 @@ const cardSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  reportsCounter: {
+    type: Number,
+    default: 0
+  },
+  active: {
+    type: Boolean,
+    default: true
   }
+
 });
 
 const Card = mongoose.model('Card', cardSchema);

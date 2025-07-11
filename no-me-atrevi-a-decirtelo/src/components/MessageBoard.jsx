@@ -12,8 +12,8 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
   const fetchAllMessages = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${BACKEND_URL}/api/cards`)
-      console.log('Fetching all messages from:', `${BACKEND_URL}/api/cards`)
+      const response = await fetch(`${BACKEND_URL}/api/cards/lastest`)
+      console.log('Fetching all messages from:', `${BACKEND_URL}/api/cards/lastest`)
       
       if (!response.ok) {
         throw new Error(`Error HTTP: ${response.status}`)
