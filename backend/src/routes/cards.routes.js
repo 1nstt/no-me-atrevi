@@ -2,6 +2,7 @@ import {Router} from 'express';
 
 import {createCard, deleteCard, getCard, getCards, getLastestsCards, updateCard, getCardsByTo} from '../controllers/cards.controller.js';
 import { createCardValidation } from '../middleware/validations/cards/cards.validations.js';
+import { reportCard } from '../controllers/cards.controller.js';
 
 const router = Router();
 
@@ -19,5 +20,7 @@ router.post('/', createCardValidation, createCard);
 router.put('/:id', updateCard);
 
 router.delete('/:id', deleteCard);
+
+router.patch('/report/:id', reportCard);
 
 export default router;

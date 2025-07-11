@@ -83,6 +83,26 @@ export const updateCard = async (req, res) => {
     }
 };
 
+export const reportCard = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const card = await Card.findById(id);
+        if (!card) {
+            return res.status(404).json({ message: `Card con id ${id} no encontrada` });
+        }
+
+        // Incrementar el contador de reportes
+        await Card.findByIdAndUpdate(id, { $inc: { reportsCounter: 1 } });
+        res.status(200).json({ message: `Card con id ${id} reportada correctamente` });
+    } catch (error) {
+        res.status(500).json({
+            message: `Error al reportar la tarjeta con id ${id}`,
+            error: error.message
+        });
+    }
+};
+
 export const deleteCard = async (req, res) => {
     const { id } = req.params;
     
