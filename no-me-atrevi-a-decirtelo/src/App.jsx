@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './components/ThemeProvider'
 import { ThemeToggle } from './components/ThemeToggle'
 import { SearchBar } from './components/SearchBar'
 import { MessageBoard } from './components/MessageBoard'
 import { MessageForm } from './components/MessageForm'
+import { LoginForm } from './components/LoginForm'
 import { Button } from './components/ui/Button'
 import { PenTool } from 'lucide-react'
 import './App.css'
@@ -32,19 +34,23 @@ function App() {
     setSearchTerm(term)
   }
 
-  if (currentView === 'form') {
-    return (
-      <ThemeProvider>
+  const handleLogin = (credentials) => {
+    console.log('Login successful:', credentials)
+    // Aquí puedes manejar la lógica de login
+  }
+
+  // Componente para la página principal
+  const HomePage = () => {
+    if (currentView === 'form') {
+      return (
         <MessageForm 
           onBack={handleBackToHome}
           onSubmit={handleMessageSubmit}
         />
-      </ThemeProvider>
-    )
-  }
+      )
+    }
 
-  return (
-    <ThemeProvider>
+    return (
       <div className="min-h-screen bg-gray-100 dark:bg-slate-900 py-8 transition-colors duration-300">
         <div className="max-w-6xl mx-auto px-4">
           {/* Header with theme toggle and send message button */}
@@ -83,6 +89,15 @@ function App() {
           />
         </div>
       </div>
+    )
+  }
+
+  return (
+    <ThemeProvider>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/vixonpaleta" element={<LoginForm onLogin={handleLogin} />} />
+      </Routes>
     </ThemeProvider>
   )
 }
