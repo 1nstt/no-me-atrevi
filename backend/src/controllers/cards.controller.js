@@ -2,7 +2,7 @@ import Card from '../models/card.model.js';
 
 export const getCards = async (req, res) => {
     try {
-        const cards = await Card.find({active: true}).sort({ createdAt: -1 });
+        const cards = await Card.find({}).sort({ createdAt: -1 });
         res.status(200).json(cards);
     } catch (error) {
         res.status(500).json({ 
@@ -14,7 +14,7 @@ export const getCards = async (req, res) => {
 
 export const getLastestsCards = async (req, res) => {
     try {
-        const cards = await Card.find({active: true}).sort({ createdAt: -1 }).limit(150);
+        const cards = await Card.find({}).sort({ createdAt: -1 }).limit(150);
         res.status(200).json(cards);
     } catch (error) {
         res.status(500).json({
@@ -133,4 +133,3 @@ export const getCardsByTo = async (req, res) => {
         });
     }
 };
-
