@@ -11,7 +11,7 @@ export const login = async (req, res) => {
         const isValidPassword = await bcrypt.compare(password, ADMIN);
         
         if (!isValidPassword) {
-            return res.status(401).json({message: "Invalid password"});
+            return res.status(401).json({message: "Usuario o contraseña incorrectos"});
         }
         
         const token = createAccessToken({role: 'admin'});
@@ -23,7 +23,7 @@ export const login = async (req, res) => {
             maxAge: MAX_AGE_TOKEN
         });
 
-        return res.status(200).json({message: "Login successful"});
+        return res.status(200).json({message: "Inicio de sesión exitoso"});
     } catch (error) {
         console.log('Error:', error);
         return res.status(500).json({message: "Server error"});

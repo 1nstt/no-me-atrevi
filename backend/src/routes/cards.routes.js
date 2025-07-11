@@ -1,6 +1,7 @@
 import {Router} from 'express';
 
 import {createCard, deleteCard, getCard, getCards, getLastestsCards, updateCard, getCardsByTo} from '../controllers/cards.controller.js';
+import { createCardValidation } from '../middleware/validations/cards/cards.validations.js';
 
 const router = Router();
 
@@ -13,7 +14,7 @@ router.get('/search/:to', getCardsByTo);
 
 router.get('/:id', getCard);
 
-router.post('/', createCard);
+router.post('/', createCardValidation, createCard);
 
 router.put('/:id', updateCard);
 
