@@ -9,7 +9,8 @@ const cardSchema = new mongoose.Schema({
   message: {
     type: String,
     required: [true, 'El mensaje es obligatorio'],
-    trim: true
+    trim: true,
+    maxlength: [250, 'El mensaje no puede exceder 250 caracteres']
   },
   timeAgo: {
     type: String,

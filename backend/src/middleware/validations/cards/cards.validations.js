@@ -16,8 +16,8 @@ export const createCardValidation = [
         .isString()
         .withMessage('El campo "message" debe ser un texto')
         .trim()
-        .isLength({ min: 1, max: 230 })
-        .withMessage('El mensaje debe tener entre 1 y 230 caracteres'),
+        .isLength({ min: 1, max: 250 })
+        .withMessage('El mensaje debe tener entre 1 y 250 caracteres'),
 
     (req, res, next) => {
     const errors = validationResult(req);
@@ -27,4 +27,3 @@ export const createCardValidation = [
     next();
   }
 ];
-

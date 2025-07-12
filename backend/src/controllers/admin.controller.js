@@ -2,6 +2,8 @@ import {ADMIN, MAX_AGE_TOKEN} from '../config.js';
 import {createAccessToken} from '../libs/jwt.js';
 import bcrypt from 'bcryptjs';
 import Card from '../models/card.model.js';
+// Importar las funciones del middleware
+import { containsOffensiveWords, getOffensiveWords } from '../middleware/validations/cards/wordFilter.js';
 
 
 export const login = async (req, res) => {
@@ -103,24 +105,7 @@ export const declineReport = async (req, res) => {
     }
 }
 
-// Lista de palabras ofensivas
-const OFFENSIVE_WORDS = [
-    'perra', 'zorra', 'maraka', 'puta', 'hija de puta', 'idiota', 'imbécil', 'estúpido',
-    'ql', 'culiada', 'ctm', 'conchadesumadre', 'concha de tu madre','hijo de puta', 'mierda',
-];
-
-// Función para detectar palabras ofensivas
-const containsOffensiveWords = (text) => {
-    const normalizedText = text.toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, ""); // Remover acentos
-    
-    return OFFENSIVE_WORDS.some(word => 
-        normalizedText.includes(word.toLowerCase())
-    );
-};
-
-//función para analizar todas las tarjetas
+// Función para analizar todas las tarjetas (ACTUALIZADA)
 export const analyze = async (req, res) => {
     try {
         // Obtener todas las tarjetas activas
@@ -130,7 +115,7 @@ export const analyze = async (req, res) => {
         let cardsWithOffensiveContent = 0;
         const updatedCards = [];
 
-        // Analizar cada tarjeta
+        // Analizar cada tarjeta usando las funciones del middleware
         for (const card of allCards) {
             const hasOffensiveContent = 
                 containsOffensiveWords(card.message) || 
@@ -144,11 +129,19 @@ export const analyze = async (req, res) => {
                     { new: true }
                 );
                 
+                // Obtener las palabras específicas encontradas
+                const offensiveWordsInMessage = getOffensiveWords(card.message);
+                const offensiveWordsInTo = getOffensiveWords(card.to);
+                
                 updatedCards.push({
                     id: card._id,
                     to: card.to,
                     message: card.message,
-                    newReportsCount: updatedCard.reportsCounter
+                    newReportsCount: updatedCard.reportsCounter,
+                    detectedWords: {
+                        inMessage: offensiveWordsInMessage,
+                        inTo: offensiveWordsInTo
+                    }
                 });
                 
                 cardsWithOffensiveContent++;
