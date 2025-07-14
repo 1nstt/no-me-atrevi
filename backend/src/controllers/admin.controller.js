@@ -32,6 +32,21 @@ export const login = async (req, res) => {
     }
 };
 
+export const logout = (req, res) => {
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+    });
+    return res.status(200).json({message: "Sesión cerrada exitosamente"});
+};
+
+export const adminContextAuth = (req, res) => {
+    return res.status(200).json({
+        message: "Usuario autenticado"
+    });
+};
+
 
 export const reportedCards = async (req, res) => {
     try {
