@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { InstagramMessageCard } from './InstagramMessageCard'
+import { useAuth } from './context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import { BACKEND_URL } from '../config'
+import { Settings } from 'lucide-react'
 
 export function MessageBoard({ searchTerm, onSearchChange }) {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isSearching, setIsSearching] = useState(false)
+  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
 
   // Función para obtener todos los mensajes
   const fetchAllMessages = async () => {
@@ -75,6 +80,10 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
     }
   }, [searchTerm])
 
+  const handleAdminClick = () => {
+    navigate('/reports')
+  }
+
   const isLoadingState = loading || isSearching
 
   if (isLoadingState) {
@@ -106,40 +115,56 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 auto-rows-fr">
-      {messages.length > 0 ? (
-        messages.map((message) => (
-          <div key={message._id} className="w-full min-h-[280px] sm:min-h-[320px] lg:min-h-[360px]">
-            <InstagramMessageCard 
-              to={message.to} 
-              message={message.message} 
-              timeAgo={message.timeAgo} 
-            />
-          </div>
-        ))
-      ) : (
-        <div className="col-span-full text-center py-10">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-2xl">{searchTerm ? '🔍' : '💌'}</span>
-            </div>
-            <div>
-              <p className="text-gray-600 dark:text-gray-400 text-lg font-medium mb-2">
-                {searchTerm 
-                  ? `No se encontraron mensajes para "${searchTerm}"`
-                  : 'No hay mensajes disponibles'
-                }
-              </p>
-              <p className="text-gray-500 dark:text-gray-500 text-sm">
-                {searchTerm 
-                  ? 'Intenta con otro nombre o revisa la ortografía'
-                  : '¡Sé el primero en enviar un mensaje anónimo!'
-                }
-              </p>
-            </div>
-          </div>
+    <div className="relative">
+      {/* Botón de Opciones Admin */}
+      {isAuthenticated && (
+        <div className="absolute top-0 right-0 z-10 mb-4">
+          <button
+            onClick={handleAdminClick}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
+          >
+            <Settings size={18} />
+            Opciones Admin
+          </button>
         </div>
       )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 auto-rows-fr pt-16">
+        {messages.length > 0 ? (
+          messages.map((message) => (
+            <div key={message._id} className="w-full min-h-[280px] sm:min-h-[320px] lg:min-h-[360px]">
+              <InstagramMessageCard 
+                to={message.to} 
+                message={message.message} 
+                timeAgo={message.timeAgo}
+                cardId={message._id}
+              />
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-10">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-2xl">{searchTerm ? '🔍' : '💌'}</span>
+              </div>
+              <div>
+                <p className="text-gray-600 dark:text-gray-400 text-lg font-medium mb-2">
+                  {searchTerm 
+                    ? `No se encontraron mensajes para "${searchTerm}"`
+                    : 'No hay mensajes disponibles'
+                  }
+                </p>
+                <p className="text-gray-500 dark:text-gray-500 text-sm">
+                  {searchTerm 
+                    ? 'Intenta con otro nombre o revisa la ortografía'
+                    : '¡Sé el primero en enviar un mensaje anónimo!'
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

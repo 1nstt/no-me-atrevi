@@ -11,8 +11,9 @@ const app = express();
 
 // Enable CORS
 app.use(cors({
-  origin: '*', // Allow all origins, adjust as needed for security
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
+  origin: 'http://localhost:5000', // Allow all origins, adjust as needed for security
+  credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Allowed HTTP methods
   allowedHeaders: ['Content-Type', 'Authorization'] // Allowed headers
 }));
 
