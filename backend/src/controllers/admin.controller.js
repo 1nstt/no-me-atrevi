@@ -180,3 +180,29 @@ export const analyze = async (req, res) => {
         return res.status(500).json({message: "Server error"});
     }
 };
+
+export const softDeleteCard = async (req, res) => {
+    try {
+        const {id} = req.params;
+        const cardId = id;
+
+        console.log('Card ID:', cardId);
+
+        //Verificar si la tarjeta existe
+        const card = await Card.findById(cardId);
+
+        if (!card) return res.status(404).json({message: "Tarjeta no encontrada"});
+
+        //Marcar la tarjeta como inactiva
+        const updatedCard = await Card.findByIdAndUpdate(
+            cardId,
+            { active: false },
+            { new: true }
+        );
+
+        return res.status(200).json({message: "Tarjeta eliminada exitosamente", updatedCard});
+    } catch (error) {
+        console.log('Error:', error);
+        return res.status(500).json({message: "Server error"});
+    }
+};
