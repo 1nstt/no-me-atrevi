@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     allowedHosts: [
       'frontend-production-87d1.up.railway.app',
+      'frontend-relase-production.up.railway.app',
       'nomeatrevi.com',
       'www.nomeatrevi.com',
       'https://nomeatrevi.com',
