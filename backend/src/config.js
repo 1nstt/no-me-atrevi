@@ -12,3 +12,6 @@ export const MAX_AGE_TOKEN = process.env.MAX_AGE_TOKEN || 7 * 24 * 60 * 60 * 100
 
 // Admin
 export const ADMIN = process.env.ADMIN || '';
+
+// CORS Origin
+export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5000';
