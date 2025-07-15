@@ -1,19 +1,39 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { InstagramMessageCard } from './InstagramMessageCard'
 import { useAuth } from './context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { BACKEND_URL } from '../config'
-import { Settings } from 'lucide-react'
+import { Settings, MessageCircle, ChevronDown, Loader2 } from 'lucide-react'
 
 export function MessageBoard({ searchTerm, onSearchChange }) {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isSearching, setIsSearching] = useState(false)
+  const [totalCount, setTotalCount] = useState(0)
+  const [showAllMessages, setShowAllMessages] = useState(false)
+  const [loadingAll, setLoadingAll] = useState(false)
+  const [showLoadAllButton, setShowLoadAllButton] = useState(false)
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
+  const gridRef = useRef(null)
 
-  // Función para obtener todos los mensajes
+  // Función para obtener el conteo total de cartas
+  const fetchTotalCount = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/cards/count`)
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`)
+      }
+      const data = await response.json()
+      setTotalCount(data.count || 0)
+    } catch (error) {
+      console.error('Error fetching total count:', error)
+      setTotalCount(0)
+    }
+  }
+
+  // Función para obtener todos los mensajes (últimos 150)
   const fetchAllMessages = async () => {
     try {
       setLoading(true)
@@ -27,12 +47,38 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
       const data = await response.json()
       setMessages(data)
       setError(null)
+      setShowAllMessages(false)
+      setShowLoadAllButton(data.length >= 150) // Mostrar botón solo si hay 150 mensajes
     } catch (error) {
       console.error('Error fetching messages:', error)
       setError(error.message)
       setMessages([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Función para obtener TODOS los mensajes activos
+  const fetchAllActiveMessages = async () => {
+    try {
+      setLoadingAll(true)
+      const response = await fetch(`${BACKEND_URL}/api/cards/active`)
+      console.log('Fetching all active messages from:', `${BACKEND_URL}/api/cards/active`)
+      
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      setMessages(data)
+      setShowAllMessages(true)
+      setShowLoadAllButton(false)
+      setError(null)
+    } catch (error) {
+      console.error('Error fetching all active messages:', error)
+      setError(error.message)
+    } finally {
+      setLoadingAll(false)
     }
   }
 
@@ -48,6 +94,7 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
       if (response.status === 404) {
         // No se encontraron resultados
         setMessages([])
+        setShowLoadAllButton(false)
         return
       }
       
@@ -57,18 +104,35 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
       
       const data = await response.json()
       setMessages(data.cards || [])
+      setShowLoadAllButton(false) // No mostrar botón en búsquedas
     } catch (error) {
       console.error('Error searching messages:', error)
       setError(error.message)
       setMessages([])
+      setShowLoadAllButton(false)
     } finally {
       setIsSearching(false)
     }
   }
 
-  // Effect para cargar mensajes iniciales
+  // Función para detectar scroll al final
+  const handleScroll = useCallback(() => {
+    if (showAllMessages || searchTerm || !showLoadAllButton) return
+
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+    const scrollHeight = document.documentElement.scrollHeight
+    const clientHeight = document.documentElement.clientHeight
+
+    if (scrollTop + clientHeight >= scrollHeight - 200) {
+      // Usuario está cerca del final, mostrar botón si no está ya visible
+      setShowLoadAllButton(true)
+    }
+  }, [showAllMessages, searchTerm, showLoadAllButton])
+
+  // Effect para cargar mensajes iniciales y conteo
   useEffect(() => {
     fetchAllMessages()
+    fetchTotalCount()
   }, [])
 
   // Effect para manejar búsquedas
@@ -79,6 +143,12 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
       fetchAllMessages()
     }
   }, [searchTerm])
+
+  // Effect para scroll
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [handleScroll])
 
   const handleAdminClick = () => {
     navigate('/reports')
@@ -116,6 +186,19 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
 
   return (
     <div className="relative">
+      {/* Contador de mensajes totales */}
+      <div className="flex items-center justify-center mb-6">
+        <div className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-full px-4 py-2 border border-purple-200 dark:border-purple-800">
+          <MessageCircle className="text-purple-600 dark:text-purple-400" size={18} />
+          <span className="text-purple-700 dark:text-purple-300 font-medium text-sm">
+            {searchTerm 
+              ? `${messages.length.toLocaleString()} encontrados de ${totalCount.toLocaleString()} mensajes`
+              : `Mostrando ${messages.length.toLocaleString()} de ${totalCount.toLocaleString()} mensajes compartidos`
+            }
+          </span>
+        </div>
+      </div>
+
       {/* Botón de Opciones Admin */}
       {isAuthenticated && (
         <div className="absolute top-0 right-0 z-10 mb-4">
@@ -129,7 +212,7 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 auto-rows-fr pt-16">
+      <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 auto-rows-fr pt-4">
         {messages.length > 0 ? (
           messages.map((message) => (
             <div key={message._id} className="w-full min-h-[280px] sm:min-h-[320px] lg:min-h-[360px]">
@@ -165,6 +248,29 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
           </div>
         )}
       </div>
+
+      {/* Botón para cargar todos los mensajes */}
+      {showLoadAllButton && !searchTerm && !showAllMessages && (
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={fetchAllActiveMessages}
+            disabled={loadingAll}
+            className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loadingAll ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                Cargando todos los mensajes...
+              </>
+            ) : (
+              <>
+                <ChevronDown size={20} />
+                Mostrar todos los mensajes
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
