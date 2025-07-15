@@ -1,6 +1,6 @@
 import {Router} from 'express';
 
-import {createCard, deleteCard, getCard, getAllActiveCards, getAllCards, getLastestsCards, updateCard, getCardsByTo} from '../controllers/cards.controller.js';
+import {createCard, deleteCard, getCard, getAllActiveCards, getAllCards, getLastestsCards, updateCard, getCardsByTo, cardsCount} from '../controllers/cards.controller.js';
 import { createCardValidation } from '../middleware/validations/cards/cards.validations.js';
 import { reportCard } from '../controllers/cards.controller.js';
 import { validateContent } from '../middleware/validations/cards/wordFilter.js';
@@ -8,6 +8,8 @@ import { validateContent } from '../middleware/validations/cards/wordFilter.js';
 const router = Router();
 
 router.get('/', getAllCards);
+
+router.get('/count', cardsCount)
 
 router.get('/active', getAllActiveCards);
 
