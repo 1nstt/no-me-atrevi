@@ -144,7 +144,9 @@ export const getCardsByTo = async (req, res) => {
     try {
         // Buscar tarjetas que coincidan exactamente con el campo "to"
         const cards = await Card.find({ 
-            to: { $regex: new RegExp(to, 'i') } // Búsqueda insensible a mayúsculas/minúsculas
+            to: { $regex: new RegExp(to, 'i'),
+            active: true
+             } // Búsqueda insensible a mayúsculas/minúsculas
         }).sort({ createdAt: -1 });
         
         if (cards.length === 0) {
