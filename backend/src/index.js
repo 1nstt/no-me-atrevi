@@ -1,6 +1,6 @@
 import express from 'express';
 import connectDB from './db.js';
-import { PORT } from './config.js';
+import { PORT, FRONTEND_URL } from './config.js';
 import cors from 'cors';
 import coockieParser from 'cookie-parser';
 // Import routes
@@ -11,11 +11,11 @@ const app = express();
 
 // Enable CORS
 app.use(cors({
-  origin: '*', // Allow all origins, adjust as needed for security
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
+  origin: FRONTEND_URL, // URL del frontend desde variable de entorno
+  credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Allowed HTTP methods
   allowedHeaders: ['Content-Type', 'Authorization'] // Allowed headers
 }));
-
 
 // Middleware to parse JSON bodies
 app.use(express.json());
