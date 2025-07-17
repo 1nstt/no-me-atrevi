@@ -14,6 +14,7 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
   const [showAllMessages, setShowAllMessages] = useState(false)
   const [loadingAll, setLoadingAll] = useState(false)
   const [showLoadAllButton, setShowLoadAllButton] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const gridRef = useRef(null)
@@ -53,6 +54,7 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
       console.error('Error fetching messages:', error)
       setError(error.message)
       setMessages([])
+      setShowLoadAllButton(false)
     } finally {
       setLoading(false)
     }
@@ -87,6 +89,7 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
     try {
       setIsSearching(true)
       setError(null)
+      setShowLoadAllButton(false) // No mostrar botón en búsquedas
       
       const response = await fetch(`${BACKEND_URL}/api/cards/search/${encodeURIComponent(searchTerm)}`)
       console.log('Searching messages for:', searchTerm)
@@ -94,7 +97,6 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
       if (response.status === 404) {
         // No se encontraron resultados
         setMessages([])
-        setShowLoadAllButton(false)
         return
       }
       
@@ -103,13 +105,21 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
       }
       
       const data = await response.json()
-      setMessages(data.cards || [])
-      setShowLoadAllButton(false) // No mostrar botón en búsquedas
+      console.log('Search response data:', data) // Para debugging
+      
+      // Verificar si la respuesta tiene la propiedad 'cards' o si es directamente un array
+      if (data.cards && Array.isArray(data.cards)) {
+        setMessages(data.cards)
+      } else if (Array.isArray(data)) {
+        setMessages(data)
+      } else {
+        setMessages([])
+      }
+      
     } catch (error) {
       console.error('Error searching messages:', error)
       setError(error.message)
       setMessages([])
-      setShowLoadAllButton(false)
     } finally {
       setIsSearching(false)
     }
@@ -129,20 +139,29 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
     }
   }, [showAllMessages, searchTerm, showLoadAllButton])
 
-  // Effect para cargar mensajes iniciales y conteo
+  // Effect para cargar mensajes iniciales y conteo SOLO UNA VEZ
   useEffect(() => {
-    fetchAllMessages()
-    fetchTotalCount()
+    const initializeData = async () => {
+      await fetchAllMessages()
+      await fetchTotalCount()
+      setIsInitialized(true)
+    }
+    
+    initializeData()
   }, [])
 
-  // Effect para manejar búsquedas
+  // Effect para manejar búsquedas - SOLO cuando hay término de búsqueda
   useEffect(() => {
+    if (!isInitialized) return // No ejecutar antes de la inicialización
+    
     if (searchTerm && searchTerm.trim()) {
+      // Si hay término de búsqueda, buscar
       searchMessagesByTo(searchTerm.trim())
     } else {
+      // Si no hay término de búsqueda, cargar mensajes normales
       fetchAllMessages()
     }
-  }, [searchTerm])
+  }, [searchTerm, isInitialized])
 
   // Effect para scroll
   useEffect(() => {
@@ -191,10 +210,7 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
         <div className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-full px-4 py-2 border border-purple-200 dark:border-purple-800">
           <MessageCircle className="text-purple-600 dark:text-purple-400" size={18} />
           <span className="text-purple-700 dark:text-purple-300 font-medium text-sm">
-            {searchTerm 
-              ? `${messages.length.toLocaleString()} encontrados de ${totalCount.toLocaleString()} mensajes`
-              : `Mostrando ${messages.length.toLocaleString()} de ${totalCount.toLocaleString()} mensajes compartidos`
-            }
+            {totalCount.toLocaleString()} mensajes compartidos
           </span>
         </div>
       </div>
