@@ -142,12 +142,16 @@ export const getCardsByTo = async (req, res) => {
     const { to } = req.params;
     
     try {
-        // Buscar tarjetas que coincidan exactamente con el campo "to"
+        console.log(`Buscando tarjetas para: "${to}"`); // Debug
+        
+        // Buscar tarjetas que coincidan exactamente con el campo "to" Y que estén activas
         const cards = await Card.find({ 
-            to: { $regex: new RegExp(to, 'i'),
-            active: true
-             } // Búsqueda insensible a mayúsculas/minúsculas
+            to: { $regex: new RegExp(to, 'i') },
+            active: { $eq: true } // Solo exactamente true (boolean)
         }).sort({ createdAt: -1 });
+        
+        console.log(`Tarjetas encontradas:`, cards.length); // Debug
+        console.log(`Estados de las tarjetas:`, cards.map(c => ({ _id: c._id, active: c.active }))); // Debug
         
         if (cards.length === 0) {
             return res.status(404).json({ 
@@ -161,6 +165,7 @@ export const getCardsByTo = async (req, res) => {
             cards: cards
         });
     } catch (error) {
+        console.error('Error en getCardsByTo:', error); // Debug
         res.status(500).json({ 
             message: `Error al buscar tarjetas para "${to}"`,
             error: error.message 
@@ -170,7 +175,8 @@ export const getCardsByTo = async (req, res) => {
 
 export const cardsCount = async (req, res) => {
     try {
-        const count = await Card.countDocuments();
+        // Contar solo las tarjetas activas
+        const count = await Card.countDocuments({ active: true });
         res.status(200).json({ count });
     } catch (error) {
         res.status(500).json({
@@ -179,5 +185,3 @@ export const cardsCount = async (req, res) => {
         });
     }
 };
-
-
