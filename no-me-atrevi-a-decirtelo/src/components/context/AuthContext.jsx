@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }) => {
       } else {
         setIsAuthenticated(false)
         setUser(null)
-        console.log('❌ Usuario no autenticado')
+       // console.log('❌ Usuario no autenticado')
       }
     } catch (err) {
       console.error('Error verificando autenticación:', err)
