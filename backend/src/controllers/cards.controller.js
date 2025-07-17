@@ -1,8 +1,20 @@
 import Card from '../models/card.model.js';
 
-export const getCards = async (req, res) => {
+export const getAllCards = async (req, res) => {
     try {
-        const cards = await Card.find({}).sort({ createdAt: -1 });
+        const cards = await Card.find().sort({ createdAt: -1 });
+        res.status(200).json(cards);
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al obtener las tarjetas",
+            error: error.message
+        });
+    }
+};
+
+export const getAllActiveCards = async (req, res) => {
+    try {
+        const cards = await Card.find({active: true}).sort({ createdAt: -1 });
         res.status(200).json(cards);
     } catch (error) {
         res.status(500).json({ 
@@ -83,6 +95,26 @@ export const updateCard = async (req, res) => {
     }
 };
 
+export const reportCard = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const card = await Card.findById(id);
+        if (!card) {
+            return res.status(404).json({ message: `Card con id ${id} no encontrada` });
+        }
+
+        // Incrementar el contador de reportes
+        await Card.findByIdAndUpdate(id, { $inc: { reportsCounter: 1 } });
+        res.status(200).json({ message: `Card con id ${id} reportada correctamente` });
+    } catch (error) {
+        res.status(500).json({
+            message: `Error al reportar la tarjeta con id ${id}`,
+            error: error.message
+        });
+    }
+};
+
 export const deleteCard = async (req, res) => {
     const { id } = req.params;
     
@@ -110,10 +142,16 @@ export const getCardsByTo = async (req, res) => {
     const { to } = req.params;
     
     try {
-        // Buscar tarjetas que coincidan exactamente con el campo "to"
+        console.log(`Buscando tarjetas para: "${to}"`); // Debug
+        
+        // Buscar tarjetas que coincidan exactamente con el campo "to" Y que estén activas
         const cards = await Card.find({ 
-            to: { $regex: new RegExp(to, 'i') } // Búsqueda insensible a mayúsculas/minúsculas
+            to: { $regex: new RegExp(to, 'i') },
+            active: { $eq: true } // Solo exactamente true (boolean)
         }).sort({ createdAt: -1 });
+        
+        console.log(`Tarjetas encontradas:`, cards.length); // Debug
+        console.log(`Estados de las tarjetas:`, cards.map(c => ({ _id: c._id, active: c.active }))); // Debug
         
         if (cards.length === 0) {
             return res.status(404).json({ 
@@ -127,9 +165,23 @@ export const getCardsByTo = async (req, res) => {
             cards: cards
         });
     } catch (error) {
+        console.error('Error en getCardsByTo:', error); // Debug
         res.status(500).json({ 
             message: `Error al buscar tarjetas para "${to}"`,
             error: error.message 
+        });
+    }
+};
+
+export const cardsCount = async (req, res) => {
+    try {
+        // Contar solo las tarjetas activas
+        const count = await Card.countDocuments({ active: true });
+        res.status(200).json({ count });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error al contar las tarjetas",
+            error: error.message
         });
     }
 };

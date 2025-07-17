@@ -1,13 +1,90 @@
-import React, { useState } from 'react'
-import { Heart, MoreHorizontal, RotateCcw } from 'lucide-react'
+import React, { useState, useRef, useEffect } from 'react'
+import { Heart, MoreHorizontal, RotateCcw, Flag, Power } from 'lucide-react'
 import { Avatar, AvatarFallback } from './ui/Avatar'
+import { useAuth } from './context/AuthContext'
+import { BACKEND_URL } from '../config'
 
-export function InstagramMessageCard({ to, message, timeAgo }) {
+export function InstagramMessageCard({ to, message, timeAgo, cardId }) {
   const [isFlipped, setIsFlipped] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isReporting, setIsReporting] = useState(false)
+  const [isDeactivating, setIsDeactivating] = useState(false)
+  const menuRef = useRef(null)
+  const { isAuthenticated } = useAuth()
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped)
   }
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen)
+  }
+
+  const handleReport = async () => {
+    try {
+      setIsReporting(true)
+      const response = await fetch(`${BACKEND_URL}/api/cards/report/${cardId}`, {
+        method: 'PATCH', // Cambiado de POST a PATCH
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        alert('Carta reportada exitosamente')
+      } else {
+        const error = await response.json()
+        alert(`Error al reportar: ${error.message}`)
+      }
+    } catch (error) {
+      console.error('Error al reportar carta:', error)
+      alert('Error al reportar la carta')
+    } finally {
+      setIsReporting(false)
+      setIsMenuOpen(false)
+    }
+  }
+
+  const handleDeactivate = async () => {
+    try {
+      setIsDeactivating(true)
+      const response = await fetch(`${BACKEND_URL}/api/admin/cards/${cardId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        alert('Carta desactivada exitosamente')
+      } else {
+        const error = await response.json()
+        alert(`Error al desactivar: ${error.message}`)
+      }
+    } catch (error) {
+      console.error('Error al desactivar carta:', error)
+      alert('Error al desactivar la carta')
+    } finally {
+      setIsDeactivating(false)
+      setIsMenuOpen(false)
+    }
+  }
+
+  // Cerrar menú cuando se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   return (
     <div className="relative w-full h-full flip-card">
@@ -36,9 +113,41 @@ export function InstagramMessageCard({ to, message, timeAgo }) {
               >
                 <RotateCcw size={16} className="sm:w-[18px] sm:h-[18px]" />
               </button>
-              <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-300 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700">
-                <MoreHorizontal size={18} className="sm:w-5 sm:h-5" />
-              </button>
+              <div className="relative" ref={menuRef}>
+                <button 
+                  onClick={toggleMenu}
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-300 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700"
+                >
+                  <MoreHorizontal size={18} className="sm:w-5 sm:h-5" />
+                </button>
+                
+                {/* Dropdown Menu */}
+                {isMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 z-10">
+                    <div className="py-1">
+                      <button
+                        onClick={handleReport}
+                        disabled={isReporting}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2 disabled:opacity-50"
+                      >
+                        <Flag size={16} />
+                        {isReporting ? 'Reportando...' : 'Reportar'}
+                      </button>
+                      
+                      {isAuthenticated && (
+                        <button
+                          onClick={handleDeactivate}
+                          disabled={isDeactivating}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-2 disabled:opacity-50"
+                        >
+                          <Power size={16} />
+                          {isDeactivating ? 'Desactivando...' : 'Desactivar carta'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

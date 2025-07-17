@@ -1,10 +1,17 @@
 import {Router} from 'express';
 
-import {createCard, deleteCard, getCard, getCards, getLastestsCards, updateCard, getCardsByTo} from '../controllers/cards.controller.js';
+import {createCard, deleteCard, getCard, getAllActiveCards, getAllCards, getLastestsCards, updateCard, getCardsByTo, cardsCount} from '../controllers/cards.controller.js';
+import { createCardValidation } from '../middleware/validations/cards/cards.validations.js';
+import { reportCard } from '../controllers/cards.controller.js';
+import { validateContent } from '../middleware/validations/cards/wordFilter.js';
 
 const router = Router();
 
-router.get('/', getCards);
+router.get('/', getAllCards);
+
+router.get('/count', cardsCount)
+
+router.get('/active', getAllActiveCards);
 
 router.get('/lastest', getLastestsCards);
 
@@ -13,10 +20,12 @@ router.get('/search/:to', getCardsByTo);
 
 router.get('/:id', getCard);
 
-router.post('/', createCard);
+router.post('/', createCardValidation, validateContent, createCard);
 
-router.put('/:id', updateCard);
+router.put('/:id', validateContent, updateCard);
 
-router.delete('/:id', deleteCard);
+//router.delete('/:id', deleteCard);
+
+router.patch('/report/:id', reportCard);
 
 export default router;

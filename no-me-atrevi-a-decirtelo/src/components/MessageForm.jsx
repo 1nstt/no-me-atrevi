@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Send, ArrowLeft, Heart } from 'lucide-react'
+import { Send, ArrowLeft, Heart, AlertTriangle } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Input } from './ui/Input'
 import { BACKEND_URL } from '../config'
@@ -10,7 +10,9 @@ export function MessageForm({ onBack, onSubmit }) {
     message: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState(null) // 'success', 'error', null
+  const [submitStatus, setSubmitStatus] = useState(null) // 'success', 'error', 'offensive', null
+  const [errorMessage, setErrorMessage] = useState('')
+  const [offensiveWords, setOffensiveWords] = useState(null)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -18,6 +20,12 @@ export function MessageForm({ onBack, onSubmit }) {
       ...prev,
       [name]: value
     }))
+    // Limpiar errores cuando el usuario empiece a escribir
+    if (submitStatus === 'error' || submitStatus === 'offensive') {
+      setSubmitStatus(null)
+      setErrorMessage('')
+      setOffensiveWords(null)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -29,8 +37,9 @@ export function MessageForm({ onBack, onSubmit }) {
 
     setIsSubmitting(true)
     setSubmitStatus(null)
+    setErrorMessage('')
+    setOffensiveWords(null)
 
-    
     try {
       const response = await fetch(`${BACKEND_URL}/api/cards`, {
         method: 'POST',
@@ -43,11 +52,29 @@ export function MessageForm({ onBack, onSubmit }) {
         }),
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`)
+        // Verificar si es un error de palabras ofensivas
+        if (response.status === 400 && result.offensiveWords) {
+          setSubmitStatus('offensive')
+          setOffensiveWords(result.offensiveWords)
+          
+          // Crear lista de todas las palabras ofensivas encontradas
+          const allOffensiveWords = [
+            ...result.offensiveWords.to,
+            ...result.offensiveWords.message
+          ]
+          const uniqueWords = [...new Set(allOffensiveWords)]
+          
+          setErrorMessage(`Error: el formulario no puede contener estas palabras: ${uniqueWords.join(', ')}`)
+        } else {
+          setSubmitStatus('error')
+          setErrorMessage(result.message || 'Error al enviar el mensaje. Por favor, inténtalo de nuevo.')
+        }
+        return
       }
 
-      const result = await response.json()
       console.log('Mensaje enviado:', result)
       
       setSubmitStatus('success')
@@ -66,6 +93,7 @@ export function MessageForm({ onBack, onSubmit }) {
     } catch (error) {
       console.error('Error al enviar mensaje:', error)
       setSubmitStatus('error')
+      setErrorMessage('Error al enviar el mensaje. Por favor, inténtalo de nuevo.')
     } finally {
       setIsSubmitting(false)
     }
@@ -139,9 +167,18 @@ export function MessageForm({ onBack, onSubmit }) {
                   placeholder="Nombre de la persona..."
                   value={formData.to}
                   onChange={handleInputChange}
-                  className="text-sm sm:text-base h-11 sm:h-12 font-poppins"
+                  className={`text-sm sm:text-base h-11 sm:h-12 font-poppins ${
+                    submitStatus === 'offensive' && offensiveWords?.to?.length > 0
+                      ? 'border-red-300 dark:border-red-600 focus-visible:ring-red-500'
+                      : ''
+                  }`}
                   disabled={isSubmitting}
                 />
+                {submitStatus === 'offensive' && offensiveWords?.to?.length > 0 && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400 font-poppins">
+                    Palabras no permitidas en este campo: {offensiveWords.to.join(', ')}
+                  </p>
+                )}
               </div>
 
               {/* Message Field */}
@@ -158,8 +195,17 @@ export function MessageForm({ onBack, onSubmit }) {
                   rows={6}
                   maxLength={230}
                   disabled={isSubmitting}
-                  className="flex w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 px-4 py-3 text-sm sm:text-base placeholder:text-gray-500 dark:placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-gray-900 dark:text-white resize-none font-poppins transition-all duration-300 leading-relaxed"
+                  className={`flex w-full rounded-lg border bg-white dark:bg-slate-800 px-4 py-3 text-sm sm:text-base placeholder:text-gray-500 dark:placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-gray-900 dark:text-white resize-none font-poppins transition-all duration-300 leading-relaxed ${
+                    submitStatus === 'offensive' && offensiveWords?.message?.length > 0
+                      ? 'border-red-300 dark:border-red-600 focus-visible:ring-red-500'
+                      : 'border-gray-300 dark:border-gray-600 focus-visible:ring-purple-500'
+                  }`}
                 />
+                {submitStatus === 'offensive' && offensiveWords?.message?.length > 0 && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400 font-poppins">
+                    Palabras no permitidas en este campo: {offensiveWords.message.join(', ')}
+                  </p>
+                )}
                 <div className="mt-2 text-right">
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     {formData.message.length}/230 caracteres
@@ -168,11 +214,29 @@ export function MessageForm({ onBack, onSubmit }) {
               </div>
 
               {/* Error Message */}
-              {submitStatus === 'error' && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-sm text-red-600 dark:text-red-400 font-poppins">
-                    Error al enviar el mensaje. Por favor, inténtalo de nuevo.
-                  </p>
+              {(submitStatus === 'error' || submitStatus === 'offensive') && (
+                <div className={`p-4 border rounded-lg ${
+                  submitStatus === 'offensive' 
+                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle 
+                      size={16} 
+                      className={
+                        submitStatus === 'offensive' 
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-red-600 dark:text-red-400'
+                      }
+                    />
+                    <p className={`text-sm font-poppins ${
+                      submitStatus === 'offensive' 
+                        ? 'text-amber-700 dark:text-amber-300'
+                        : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {errorMessage}
+                    </p>
+                  </div>
                 </div>
               )}
 
