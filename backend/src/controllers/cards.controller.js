@@ -26,7 +26,7 @@ export const getAllActiveCards = async (req, res) => {
 
 export const getLastestsCards = async (req, res) => {
     try {
-        const cards = await Card.find({}).sort({ createdAt: -1 }).limit(150);
+        const cards = await Card.find({active: true}).sort({ createdAt: -1 }).limit(150);
         res.status(200).json(cards);
     } catch (error) {
         res.status(500).json({
