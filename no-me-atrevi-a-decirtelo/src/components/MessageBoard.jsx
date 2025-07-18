@@ -7,17 +7,18 @@ import { Settings, MessageCircle, ChevronDown, Loader2 } from 'lucide-react'
 
 export function MessageBoard({ searchTerm, onSearchChange }) {
   const [messages, setMessages] = useState([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [isSearching, setIsSearching] = useState(false)
   const [totalCount, setTotalCount] = useState(0)
   const [showAllMessages, setShowAllMessages] = useState(false)
-  const [loadingAll, setLoadingAll] = useState(false)
   const [showLoadAllButton, setShowLoadAllButton] = useState(false)
-  const [isInitialized, setIsInitialized] = useState(false)
+  
+  // Estado unificado para manejar todas las operaciones de carga
+  const [operationState, setOperationState] = useState('idle') // 'idle', 'loading', 'searching', 'loading-all'
+  
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const gridRef = useRef(null)
+  const abortControllerRef = useRef(null)
 
   // Función para obtener el conteo total de cartas
   const fetchTotalCount = async () => {
@@ -35,10 +36,9 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
   }
 
   // Función para obtener todos los mensajes (últimos 150)
-  const fetchAllMessages = async () => {
+  const fetchAllMessages = async (signal) => {
     try {
-      setLoading(true)
-      const response = await fetch(`${BACKEND_URL}/api/cards/lastest`)
+      const response = await fetch(`${BACKEND_URL}/api/cards/lastest`, { signal })
       console.log('Fetching all messages from:', `${BACKEND_URL}/api/cards/lastest`)
       
       if (!response.ok) {
@@ -51,19 +51,19 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
       setShowAllMessages(false)
       setShowLoadAllButton(data.length >= 150) // Mostrar botón solo si hay 150 mensajes
     } catch (error) {
-      console.error('Error fetching messages:', error)
-      setError(error.message)
-      setMessages([])
-      setShowLoadAllButton(false)
-    } finally {
-      setLoading(false)
+      if (error.name !== 'AbortError') {
+        console.error('Error fetching messages:', error)
+        setError(error.message)
+        setMessages([])
+        setShowLoadAllButton(false)
+      }
     }
   }
 
   // Función para obtener TODOS los mensajes activos
   const fetchAllActiveMessages = async () => {
     try {
-      setLoadingAll(true)
+      setOperationState('loading-all')
       const response = await fetch(`${BACKEND_URL}/api/cards/active`)
       console.log('Fetching all active messages from:', `${BACKEND_URL}/api/cards/active`)
       
@@ -80,23 +80,21 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
       console.error('Error fetching all active messages:', error)
       setError(error.message)
     } finally {
-      setLoadingAll(false)
+      setOperationState('idle')
     }
   }
 
   // Función para buscar mensajes por destinatario
-  const searchMessagesByTo = async (searchTerm) => {
+  const searchMessagesByTo = async (searchTerm, signal) => {
     try {
-      setIsSearching(true)
-      setError(null)
-      setShowLoadAllButton(false) // No mostrar botón en búsquedas
-      
-      const response = await fetch(`${BACKEND_URL}/api/cards/search/${encodeURIComponent(searchTerm)}`)
+      const response = await fetch(`${BACKEND_URL}/api/cards/search/${encodeURIComponent(searchTerm)}`, { signal })
       console.log('Searching messages for:', searchTerm)
       
       if (response.status === 404) {
         // No se encontraron resultados
         setMessages([])
+        setError(null)
+        setShowLoadAllButton(false)
         return
       }
       
@@ -116,12 +114,16 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
         setMessages([])
       }
       
+      setError(null)
+      setShowLoadAllButton(false) // No mostrar botón en búsquedas
+      
     } catch (error) {
-      console.error('Error searching messages:', error)
-      setError(error.message)
-      setMessages([])
-    } finally {
-      setIsSearching(false)
+      if (error.name !== 'AbortError') {
+        console.error('Error searching messages:', error)
+        setError(error.message)
+        setMessages([])
+        setShowLoadAllButton(false)
+      }
     }
   }
 
@@ -139,29 +141,76 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
     }
   }, [showAllMessages, searchTerm, showLoadAllButton])
 
-  // Effect para cargar mensajes iniciales y conteo SOLO UNA VEZ
+  // Effect para carga inicial SOLO UNA VEZ
   useEffect(() => {
     const initializeData = async () => {
-      await fetchAllMessages()
-      await fetchTotalCount()
-      setIsInitialized(true)
+      setOperationState('loading')
+      
+      const controller = new AbortController()
+      abortControllerRef.current = controller
+      
+      try {
+        await Promise.all([
+          fetchAllMessages(controller.signal),
+          fetchTotalCount()
+        ])
+      } finally {
+        setOperationState('idle')
+      }
     }
     
     initializeData()
+    
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
   }, [])
 
-  // Effect para manejar búsquedas - SOLO cuando hay término de búsqueda
+  // Effect para manejar búsquedas
   useEffect(() => {
-    if (!isInitialized) return // No ejecutar antes de la inicialización
+    // Solo ejecutar si ya pasó la carga inicial
+    if (operationState === 'loading') return
     
-    if (searchTerm && searchTerm.trim()) {
-      // Si hay término de búsqueda, buscar
-      searchMessagesByTo(searchTerm.trim())
-    } else {
-      // Si no hay término de búsqueda, cargar mensajes normales
-      fetchAllMessages()
+    // Cancelar cualquier operación en curso
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
     }
-  }, [searchTerm, isInitialized])
+    
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+    
+    const performSearch = async () => {
+      if (searchTerm && searchTerm.trim()) {
+        // Limpiar inmediatamente los mensajes antiguos y mostrar estado de búsqueda
+        setMessages([])
+        setOperationState('searching')
+        setError(null)
+        setShowLoadAllButton(false)
+        
+        // Realizar búsqueda
+        await searchMessagesByTo(searchTerm.trim(), controller.signal)
+      } else {
+        // Sin término de búsqueda, cargar mensajes normales
+        setMessages([])
+        setOperationState('loading')
+        setError(null)
+        
+        await fetchAllMessages(controller.signal)
+      }
+      
+      setOperationState('idle')
+    }
+    
+    performSearch()
+    
+    return () => {
+      if (abortControllerRef.current === controller) {
+        controller.abort()
+      }
+    }
+  }, [searchTerm])
 
   // Effect para scroll
   useEffect(() => {
@@ -173,14 +222,15 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
     navigate('/reports')
   }
 
-  const isLoadingState = loading || isSearching
+  const isLoadingState = operationState === 'loading' || operationState === 'searching'
+  const isLoadingAll = operationState === 'loading-all'
 
   if (isLoadingState) {
     return (
       <div className="flex justify-center items-center py-20">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
         <span className="ml-3 text-gray-600 dark:text-gray-400">
-          {isSearching ? 'Buscando...' : 'Cargando...'}
+          {operationState === 'searching' ? 'Buscando...' : 'Cargando...'}
         </span>
       </div>
     )
@@ -194,7 +244,15 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
           Por favor, intenta nuevamente más tarde
         </p>
         <button
-          onClick={() => searchTerm ? searchMessagesByTo(searchTerm) : fetchAllMessages()}
+          onClick={() => {
+            if (searchTerm) {
+              setOperationState('searching')
+              searchMessagesByTo(searchTerm).finally(() => setOperationState('idle'))
+            } else {
+              setOperationState('loading')
+              fetchAllMessages().finally(() => setOperationState('idle'))
+            }
+          }}
           className="mt-4 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
         >
           Reintentar
@@ -270,10 +328,10 @@ export function MessageBoard({ searchTerm, onSearchChange }) {
         <div className="flex justify-center mt-8">
           <button
             onClick={fetchAllActiveMessages}
-            disabled={loadingAll}
+            disabled={isLoadingAll}
             className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loadingAll ? (
+            {isLoadingAll ? (
               <>
                 <Loader2 className="animate-spin" size={20} />
                 Cargando todos los mensajes...
