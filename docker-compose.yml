@@ -1,23 +1,44 @@
 services:
+  # Nginx como proxy inverso
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/ssl  # Monta tus certificados SSL aquí
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app-network
+
   frontend:
     build:
       context: ./no-me-atrevi-a-decirtelo
       dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
+    # Solo exponer internamente, no al host
+    expose:
+      - "5000"
     volumes:
       - ./no-me-atrevi-a-decirtelo:/app
       - /app/node_modules
+    networks:
+      - app-network
   
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
+    # Solo exponer internamente, no al host
+    expose:
+      - "3000"
     volumes:
       - ./backend:/app
       - /app/node_modules
+    networks:
+      - app-network
 
   mongo: #Servidor de base de datos
     image: mongo:latest
@@ -29,6 +50,8 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: admin123
     volumes:
       - mongo_data:/data/db # Volumen gestionado por docker =! carpeta en local mapeada
+    networks:
+      - app-network
 
   mongo-express:
     image: mongo-express:latest
@@ -42,6 +65,13 @@ services:
       ME_CONFIG_MONGODB_SERVER: mongo
     depends_on:
       - mongo # Se usa el nombre del servicio
+    networks:
+      - app-network
+
+# Definir la red para que todos los servicios se comuniquen
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   mongo_data: 
