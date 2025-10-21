@@ -2,3 +2,14 @@
 /frontend/node_modules
 /backend/.env
 /no-me-atrevi-a-decirtelo/.env
+
+# Certificados SSL y claves privadas (NUNCA subir al repositorio)
+/ssl/certs/*.crt
+/ssl/certs/*.pem
+/ssl/private/*.key
+/ssl/private/*.pem
+
+# Archivos de certificados temporales
+*.csr
+*.p12
+*.pfx
