@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./no-me-atrevi-a-decirtelo
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"  # Mapeo directo para desarrollo
+    volumes:
+      - ./no-me-atrevi-a-decirtelo:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_BACKEND_URL=http://localhost:3000
+    networks:
+      - dev-network
+    depends_on:
+      - backend
+  
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"  # Mapeo directo para desarrollo
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://admin:admin123@mongo:27017/nomeatrevi?authSource=admin
+    networks:
+      - dev-network
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo-nma-dev
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: nomeatrevi
+    volumes:
+      - mongo_data_dev:/data/db
+    networks:
+      - dev-network
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express-nma-dev
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin123
+      ME_CONFIG_BASICAUTH: "false"
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: 27017
+    depends_on:
+      - mongo
+    networks:
+      - dev-network
+
+# Red específica para desarrollo
+networks:
+  dev-network:
+    driver: bridge
+    name: nomeatrevi-dev-network
+
+# Volumen específico para desarrollo
+volumes:
+  mongo_data_dev:
+    name: nomeatrevi-mongo-dev
