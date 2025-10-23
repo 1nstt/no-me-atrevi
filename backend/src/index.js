@@ -11,10 +11,10 @@ const app = express();
 
 // Enable CORS
 app.use(cors({
-  origin: FRONTEND_URL, // URL del frontend desde variable de entorno
+  origin: ['https://nomeatrevi.com', 'https://www.nomeatrevi.com', 'http://localhost:5000'], // URLs permitidas
   credentials: true, // Allow credentials (cookies, authorization headers, etc.)
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Allowed HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization'] // Allowed headers
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Allowed HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'] // Allowed headers
 }));
 
 // Middleware to parse JSON bodies
